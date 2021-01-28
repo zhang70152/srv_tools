@@ -14,12 +14,9 @@ def merge_header(ns, frame_id):
     else:
         return ns + '/' + frame_id
 
-def change_frame_id_and_time(inbag,frame_id):
+def change_frame_id_and_time(inbag,frame_id,outbag):
   rospy.loginfo('   Processing input bagfile: %s', inbag)
   rospy.loginfo('           Writing frame_id: %s', frame_id)
-
-  outname = frame_id + "_outbag"
-  outbag = rosbag.Bag(outname,'w')
 
   start_time = rospy.Time.from_sec(rosbag.Bag(inbag,'r').get_start_time())
   start_time_1 = rospy.Duration(rosbag.Bag(inbag,'r').get_start_time())
@@ -50,9 +47,8 @@ def change_frame_id_and_time(inbag,frame_id):
     else:
       outbag.write(topic, msg, t - start_time_1, connection_header=conn_header)
   rospy.loginfo('Closing output bagfile and exit...')
-  outbag.close()
-  return outname
 
+  
 
 
 def merge(inbag1, inbag2, outbag='final.bag', topics=None, exclude_topics=[], raw=True):
@@ -62,9 +58,6 @@ def merge(inbag1, inbag2, outbag='final.bag', topics=None, exclude_topics=[], ra
   except IOError as e:
     #print('Failed to open output bag file %s!: %s' % (outbag, e.message), file=sys.stderr)
     return 127
-
-
-
 
   for topic, msg, t in rosbag.Bag(inbag1, 'r').read_messages(topics=topics, raw=raw):
     #if topic not in exclude_topics:
@@ -93,9 +86,18 @@ if __name__ == "__main__":
   args = parser.parse_args()
 
   try:
-    outbag1 = change_frame_id_and_time(args.i1,args.f1)
-    outbag2 = change_frame_id_and_time(args.i2,args.f2)
-    merge(outbag1,outbag2)
+    outbag = rosbag.Bag(args.o,'w')
+    #out = rosbag.Bag(outbag, 'a' if os.path.exists(outbag) else 'w')
+  except IOError as e:
+    a=5
+    #print('Failed to open output bag file %s!: %s' % (outbag, e.message), file=sys.stderr)
+ 
+
+  try:
+    change_frame_id_and_time(args.i1, args.f1, outbag)
+    change_frame_id_and_time(args.i2, args.f2, outbag)
+    outbag.close()
+    #merge(outbag1,outbag2)
   except Exception, e:
     import traceback
     traceback.print_exc()
