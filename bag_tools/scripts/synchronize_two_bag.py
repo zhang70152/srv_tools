@@ -9,10 +9,12 @@ import argparse
 
 
 def merge_header(ns, frame_id):
-    if frame_id.startswith('/'):
-        return ns + frame_id
+    if frame_id == "map" or frame_id == "/map" :
+      return frame_id
+    elif frame_id.startswith('/'):
+      return ns + frame_id
     else:
-        return ns + '/' + frame_id
+      return ns + '/' + frame_id
 
 def change_frame_id_and_time(inbag,frame_id,outbag):
   rospy.loginfo('   Processing input bagfile: %s', inbag)
@@ -40,7 +42,8 @@ def change_frame_id_and_time(inbag,frame_id,outbag):
             else:
               transform.header.stamp = transform.header.stamp - start_time
     else:
-       topic = frame_id + topic
+      if frame_id != "map" and frame_id != "/map" :   
+        topic = frame_id + topic
     if t <  start_time:
       print('t: ', t.to_sec())
       outbag.write(topic, msg, rospy.Time.from_sec(0.0), connection_header=conn_header)
